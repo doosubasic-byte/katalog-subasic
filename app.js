@@ -8,6 +8,125 @@ let filtered = [];
 let prikazano = 0;
 const KORAK = 30;
 
+/* ===================== KORPA ===================== */
+function getCart(){
+  return JSON.parse(localStorage.getItem("korpa")||"{}");
+}
+function saveCart(cart){
+  localStorage.setItem("korpa",JSON.stringify(cart));
+}
+
+/* ===== PROMJENA IZGLEDA KARTICE ===== */
+
+function setAddedView(card,sifra,naziv){
+  const box=card.querySelector(".qtybox");
+
+  box.innerHTML=`
+    <div class="addedLabel" onclick="editItem('${sifra}','${naziv.replace(/'/g,"")}')">
+      ✔ Dodano (klik za izmjenu)
+    </div>
+  `;
+}
+
+function setEditView(card,sifra,naziv,kolicina=""){
+  const box=card.querySelector(".qtybox");
+
+  box.innerHTML=`
+    <input class="qtyInput" type="number" min="1" value="${kolicina}" placeholder="kol"
+      onkeydown="if(event.key==='Enter'){addToCart('${sifra}','${naziv.replace(/'/g,"")}')}">
+    <button onclick="addToCart('${sifra}','${naziv.replace(/'/g,"")}')">Dodaj</button>
+  `;
+}
+
+/* vrati sve kartice nakon rendera */
+function restoreCards(){
+  const cart=getCart();
+
+  document.querySelectorAll("[data-sifra]").forEach(card=>{
+    const sifra=card.dataset.sifra;
+    const naziv=card.dataset.naziv;
+
+    if(cart[sifra]){
+      setAddedView(card,sifra,naziv);
+    }else{
+      setEditView(card,sifra,naziv);
+    }
+  });
+}
+
+/* klik na ✔ Dodano */
+function editItem(sifra,naziv){
+  const card=document.querySelector(`[data-sifra="${sifra}"]`);
+  const cart=getCart();
+  setEditView(card,sifra,naziv,cart[sifra]?.kolicina||"");
+}
+
+/* DODAJ */
+function addToCart(sifra,naziv){
+  const card=document.querySelector(`[data-sifra="${sifra}"]`);
+  const input=card.querySelector(".qtyInput");
+
+  let k=parseInt(input.value);
+  if(!k||k<=0) return;
+
+  let cart=getCart();
+  cart[sifra]={naziv:naziv,kolicina:k};
+  saveCart(cart);
+
+  setAddedView(card,sifra,naziv);
+  renderCart();
+}
+
+/* PROMJENA U POPUPU */
+function updateCartQty(sifra,val){
+  let cart=getCart();
+
+  if(val<=0){
+    delete cart[sifra];
+  }else{
+    cart[sifra].kolicina=val;
+  }
+
+  saveCart(cart);
+  renderCart();
+  restoreCards();
+}
+
+/* BRISANJE */
+function removeItemCart(sifra){
+  let cart=getCart();
+  delete cart[sifra];
+  saveCart(cart);
+
+  renderCart();
+  restoreCards();
+}
+
+/* POPUP */
+function renderCart(){
+  const box=document.getElementById("cartItems");
+  if(!box) return;
+
+  const cart=getCart();
+  let html="";
+
+  for(let s in cart){
+    html+=`
+      <div class="cartItem">
+        <span>${cart[s].naziv}</span>
+
+        <input type="number" min="0" value="${cart[s].kolicina}"
+          style="width:60px"
+          onchange="updateCartQty('${s}',this.value)">
+
+        <button onclick="removeItemCart('${s}')">❌</button>
+      </div>
+    `;
+  }
+
+  box.innerHTML=html||"Korpa je prazna";
+}
+
 /* GRID */
 function setCols(n){
   grid.style.gridTemplateColumns = `repeat(${n}, minmax(0,1fr))`;
@@ -20,28 +139,15 @@ colsSel.onchange = () => setCols(colsSel.value);
 /* BADGE */
 function renderBadge(x){
   if(!x.oznaka) return "";
-
   const o = x.oznaka.toUpperCase();
-
-  if(o==="AKCIJA")
-    return `<div class="badge badge-akcija">AKCIJA ${x.akcija_postotak ? "- "+x.akcija_postotak+"%" : ""}</div>`;
-
-  if(o==="NOVO")
-    return `<div class="badge badge-novo">NOVO</div>`;
-
-  if(o==="1+1")
-    return `<div class="badge badge-11">1+1 GRATIS</div>`;
-
-  if(o==="ISTEK")
-    return `<div class="badge badge-istek">PRI ISTEKU</div>`;
-
-  if(o==="STIZE")
-    return `<div class="badge badge-stize">STIŽE USKORO</div>`;
-
+  if(o==="AKCIJA") return `<div class="badge badge-akcija">AKCIJA ${x.akcija_postotak ? "- "+x.akcija_postotak+"%" : ""}</div>`;
+  if(o==="NOVO") return `<div class="badge badge-novo">NOVO</div>`;
+  if(o==="1+1") return `<div class="badge badge-11">1+1 GRATIS</div>`;
+  if(o==="ISTEK") return `<div class="badge badge-istek">PRI ISTEKU</div>`;
+  if(o==="STIZE") return `<div class="badge badge-stize">STIŽE USKORO</div>`;
   return "";
 }
 
-/* KLASA KARTICE */
 function cardClass(x){
   if(!x.oznaka) return "card";
   if(x.oznaka.toUpperCase()==="AKCIJA") return "card card-akcija";
@@ -49,9 +155,8 @@ function cardClass(x){
   return "card";
 }
 
-/* UČITAJ JOŠ ARTIKALA (LAZY RENDER) */
+/* UCITAJ */
 function ucitajJos(){
-
   let kraj = Math.min(prikazano + KORAK, filtered.length);
   let html = "";
 
@@ -59,7 +164,7 @@ function ucitajJos(){
     const x = filtered[i];
 
     html += `
-      <div class="${cardClass(x)}">
+      <div class="${cardClass(x)}" data-sifra="${x.sifra}" data-naziv="${x.naziv.replace(/"/g,'')}">
         ${renderBadge(x)}
         <img class="img" loading="lazy" decoding="async" src="images/${x.slika}" onerror="this.src='no-image.png'">
         <div class="t">${x.naziv}</div>
@@ -68,17 +173,20 @@ function ucitajJos(){
           VPC: <b>${x.vpc}</b> KM | MPC: <b>${x.mpc}</b> KM<br> 
           Pakovanje: <b>${x.pakovanje}</b>
         </div>
+
+        <div class="qtybox"></div>
       </div>
     `;
   }
 
   grid.insertAdjacentHTML("beforeend", html);
   prikazano = kraj;
+
+  restoreCards();
 }
 
 /* RENDER */
 function render(){
-
   const term = q.value.toLowerCase();
   const g = groupSel.value;
 
@@ -94,14 +202,12 @@ function render(){
   ucitajJos();
 }
 
-/* SKROL DETEKCIJA */
 window.addEventListener("scroll", () => {
   if(window.innerHeight + window.scrollY >= document.body.offsetHeight - 500){
     ucitajJos();
   }
 });
 
-/* GRUPE */
 function fillGroups(){
   const groups=[...new Set(items.map(x=>x.grupa).filter(Boolean))];
   groupSel.innerHTML=`<option value="">Sve grupe</option>`+
@@ -111,7 +217,6 @@ function fillGroups(){
 q.oninput=render;
 groupSel.onchange=render;
 
-/* CSV */
 Papa.parse("data/products.csv",{
   download:true,
   header:true,
