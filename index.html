@@ -59,6 +59,39 @@ input,select{padding:10px;border:1px solid #ddd;border-radius:10px;background:#f
 
 .cartBox input{width:100%;box-sizing:border-box;}
 .sendBtn{width:100%;margin-top:14px;padding:12px;border:none;border-radius:10px;background:#2e7d32;color:#fff;font-weight:700;font-size:16px;}
+
+/* ================= MOBILE FIX ================= */
+@media (max-width: 700px){
+
+  .card{
+    padding:10px;
+  }
+
+  .qtybox{
+    display:flex;
+    flex-direction:column; /* input iznad dugmeta */
+    gap:6px;
+  }
+
+  .qtyInput{
+    width:100%;
+    min-width:0;
+    box-sizing:border-box;
+  }
+
+  .qtybox button{
+    width:100%;
+    padding:10px 0;
+  }
+
+  .addedLabel{
+    width:100%;
+  }
+
+}
+
+
+
 </style>
 
 </head>
@@ -86,8 +119,8 @@ input,select{padding:10px;border:1px solid #ddd;border-radius:10px;background:#f
 
 <br>
 <input id="firma" placeholder="Naziv firme"><br><br>
-<input id="osoba" placeholder="Kontakt osoba"><br><br>
-<input id="telefon" placeholder="Telefon">
+<input id="osoba" placeholder="Kontakt osoba - (nije obavezno)"><br><br>
+<input id="telefon" placeholder="Telefon - (nije obavezno)">
 
 <button class="sendBtn" onclick="sendOrder()">Pošalji narudžbu</button>
 <br><br>
@@ -124,17 +157,42 @@ document.addEventListener("keydown",e=>{
 
 function sendOrder(){
 
-  const firma=document.getElementById("firma").value;
-  const osoba=document.getElementById("osoba").value;
-  const telefon=document.getElementById("telefon").value;
-  const cart=JSON.parse(localStorage.getItem("korpa")||"{}");
+  const firmaEl = document.getElementById("firma");
+  const osobaEl = document.getElementById("osoba");
+  const telefonEl = document.getElementById("telefon");
 
+  const firma = (firmaEl.value || "").trim();
+  const osoba = (osobaEl.value || "").trim();
+  const telefon = (telefonEl.value || "").trim();
+
+  const cart = JSON.parse(localStorage.getItem("korpa")||"{}");
+
+  // prazna korpa
   if(!Object.keys(cart).length){
     alert("Korpa je prazna");
     return;
   }
 
-  let text=`NARUDŽBA\nFirma: ${firma}\nOsoba: ${osoba}\nTelefon: ${telefon}\n\n`;
+  // firma obavezna
+  if(!firma){
+    alert("Ne možeš poslati narudžbu dok ne upišeš naziv firme.");
+    firmaEl.focus();
+    return;
+  }
+
+  // datum
+  const now = new Date();
+  const datum = now.toLocaleString("bs-BA");
+
+  // tekst maila
+  let text=`NARUDŽBA
+Datum: ${datum}
+Firma: ${firma}
+Kontakt osoba: ${osoba || "-"}
+Telefon: ${telefon || "-"}
+
+STAVKE:
+`;
 
   for(let s in cart){
     text+=`${cart[s].naziv} x ${cart[s].kolicina}\n`;
@@ -148,14 +206,20 @@ function sendOrder(){
       message:text
     })
   })
-  .then(res=>res.json())
+  .then(res=>{
+    if(!res.ok) throw new Error("Slanje nije uspjelo");
+    return res.json().catch(()=>({}));
+  })
   .then(()=>{
     alert("Narudžba poslana ✅");
     localStorage.removeItem("korpa");
     location.reload();
   })
-  .catch(()=>alert("Greška pri slanju"));
+  .catch(()=>{
+    alert("Greška: narudžba NIJE poslana. Pokušaj ponovo.");
+  });
 }
+
 
 </script>
 
