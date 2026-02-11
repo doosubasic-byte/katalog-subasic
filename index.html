@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="bs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Katalog</title>
+
+<style>
+body{
+  font-family:system-ui;
+  margin:0;
+  padding:16px;
+  background:#f6f6f6;
+}
+
+/* 🔥 STICKY TOP BAR */
+.top{
+  position:sticky;
+  top:0;
+  z-index:100;
+  background:#f6f6f6;
+
+  display:flex;
+  gap:8px;
+  align-items:center;
+  padding-bottom:10px;
+  margin-bottom:12px;
+}
+
+input, select{
+  padding:10px;
+  border:1px solid #ddd;
+  border-radius:10px;
+  background:#fff;
+}
+
+#q{
+  flex:1;        /* zauzima sav slobodan prostor */
+  min-width:0;
+}
+
+#group,
+#cols{
+  flex:0 0 auto; /* ostaju svoje širine */
+}
+
+.grid{
+  display:grid;
+  gap:12px;
+}
+
+/* KARTICA */
+.card{
+  position:relative;
+  background:#fff;
+  border-radius:14px;
+  padding:10px;
+  box-shadow:0 1px 6px rgba(0,0,0,.08);
+  transition:.2s ease;
+}
+
+/* AKCIJA – blago crveno */
+.card-akcija{
+  background:linear-gradient(0deg,#fafd25,#fc9595);
+  border:1px solid #f53636;
+}
+
+/* 1+1 GRATIS – plavo */
+.card-11{
+  background:linear-gradient(0deg,#cbe6fc,#0673f0);
+  border:1px solid #498ef5;
+}
+
+.card:hover{
+  box-shadow:0 4px 14px rgba(0,0,0,.15);
+  transform:translateY(-2px);
+}
+
+.img{
+  width:100%;
+  aspect-ratio:4/3;
+  object-fit:contain;
+  border-radius:10px;
+  background:#fff;
+}
+
+/* BADGE */
+.badge{
+  position:absolute;
+  top:8px;
+  left:8px;
+  padding:6px 10px;
+  font-size:12px;
+  font-weight:700;
+  color:#fff;
+  border-radius:10px;
+  z-index:5;
+}
+
+.badge-akcija{ background:#d32f2f; }
+.badge-novo{ background:#2e7d32; }
+.badge-11{ background:#0821ff; }
+.badge-istek{ background:#ef6c00; }
+.badge-stize{ background:#ac15c0; }
+
+.t{
+  font-weight:700;
+  margin:8px 0 4px;
+}
+
+.meta{
+  font-size:13px;
+  color:#333;
+  line-height:1.4;
+}
+</style>
+</head>
+
+<body>
+
+<div class="top">
+  <input id="q" placeholder="Pretraga: naziv, šifra, grupa...">
+  <select id="group"><option value="">Sve grupe</option></select>
+  <select id="cols">
+    <option value="1">Prikaz 1</option>
+    <option value="2">Prikaz 2</option>
+    <option value="3" selected>Prikaz 3</option>
+    <option value="4">Prikaz 4</option>
+  </select>
+</div>
+
+<div id="grid" class="grid"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
