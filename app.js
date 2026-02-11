@@ -129,9 +129,28 @@ function renderCart(){
 
 /* GRID */
 function setCols(n){
-  grid.style.gridTemplateColumns = `repeat(${n}, minmax(0,1fr))`;
+
+  n = parseInt(n);
+
+  let minWidth = 170; // desktop normal
+
+  if(window.innerWidth < 900) minWidth = 150;
+  if(window.innerWidth < 700) minWidth = 140;
+  if(window.innerWidth < 550) minWidth = 130;
+  if(window.innerWidth < 420) minWidth = 120;
+
+  // maksimalan broj kolona koji stane
+  const maxCols = Math.floor(grid.clientWidth / minWidth) || 1;
+
+  // ako korisnik izabere 4 na telefonu — ograniči
+  const finalCols = Math.min(n, maxCols);
+
+  grid.style.gridTemplateColumns =
+    `repeat(${finalCols}, minmax(${minWidth}px,1fr))`;
+
   localStorage.setItem("cols", n);
 }
+
 setCols(localStorage.getItem("cols") || "3");
 colsSel.value = localStorage.getItem("cols") || "3";
 colsSel.onchange = () => setCols(colsSel.value);
