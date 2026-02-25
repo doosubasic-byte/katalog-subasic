@@ -202,6 +202,7 @@ function ucitajJos(){
   prikazano = kraj;
 
   restoreCards();
+  document.getElementById("loadingOverlay")?.remove();
 }
 
 /* RENDER */
@@ -257,6 +258,5 @@ Papa.parse("data/products.csv",{
     }));
     fillGroups();
     render();
-    document.getElementById("loadingOverlay")?.remove();
   }
 });
