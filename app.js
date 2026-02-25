@@ -257,5 +257,6 @@ Papa.parse("data/products.csv",{
     }));
     fillGroups();
     render();
+    document.getElementById("loadingOverlay")?.remove();
   }
 });
