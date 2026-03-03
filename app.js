@@ -127,7 +127,7 @@ function renderCart(){
   box.innerHTML=html||"Korpa je prazna";
 }
 
-/* GRID */
+/* GRID - Prikaz */
 function setCols(n){
 
   n = parseInt(n);
