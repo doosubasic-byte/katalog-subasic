@@ -237,6 +237,7 @@ function fillGroups(){
 q.oninput=render;
 groupSel.onchange=render;
 
+/* CSV 
 Papa.parse("data/products.csv",{
   download:true,
   header:true,
@@ -260,3 +261,29 @@ Papa.parse("data/products.csv",{
     render();
   }
 });
+*/
+
+/* JSON */
+fetch("data/products.json")
+  .then(res => res.json())
+  .then(data => {
+
+    items = data.map(r => ({
+      sifra:r.sifra,
+      naziv:r.naziv,
+      vpc:r.vpc,
+      mpc:r.mpc,
+      pakovanje:r.pakovanje,
+      grupa:r.grupa,
+      redoslijed:r.redoslijed,
+      slika:r.slika,
+      oznaka:r.oznaka,
+      akcija_postotak:r.akcija_postotak,
+      aktivno:r.aktivno
+    }));
+
+    fillGroups();
+    render();
+
+  })
+  .catch(err => console.error("Greška učitavanja JSON:", err));
