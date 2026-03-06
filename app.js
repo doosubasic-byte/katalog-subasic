@@ -237,6 +237,7 @@ function fillGroups(){
 q.oninput=render;
 groupSel.onchange=render;
 
+
 Papa.parse("data/products.csv",{
   download:true,
   header:true,
