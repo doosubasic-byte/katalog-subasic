@@ -238,6 +238,7 @@ q.oninput=render;
 groupSel.onchange=render;
 
 
+/* CSV */
 Papa.parse("data/products.csv",{
   download:true,
   header:true,
@@ -261,3 +262,5 @@ Papa.parse("data/products.csv",{
     render();
   }
 });
+
+
