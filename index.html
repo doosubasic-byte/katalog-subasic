@@ -1,4 +1,3 @@
-
 <!doctype html>
 
 <html lang="bs">
@@ -184,11 +183,9 @@ document.addEventListener("keydown",e=>{
   el.oninput=()=>localStorage.setItem(id,el.value);
 });
 
-/* ================= SLANJE NARUDŽBE - WEB3FORMS ================= */
-
 async function sendOrder(){
 
-  // OVDJE UNESI SVOJ WEB3FORMS ACCESS KEY
+  // Web3Forms Access Key, prethodno dostavljen za ovaj katalog
   const ACCESS_KEY = "f53a2c4b-c479-4a99-8b8f-1d2f1228de5d";
 
   const firmaEl = document.getElementById("firma");
@@ -202,31 +199,21 @@ async function sendOrder(){
   const osoba = (osobaEl.value || "").trim();
   const telefon = (telefonEl.value || "").trim();
 
-  const cart = JSON.parse(localStorage.getItem("korpa")||"{}");
+  const cart = JSON.parse(localStorage.getItem("korpa") || "{}");
 
-  // prazna korpa
   if(!Object.keys(cart).length){
     alert("Korpa je prazna");
     return;
   }
 
-  // firma obavezna
   if(!firma){
     alert("Ne možeš poslati narudžbu dok ne upišeš naziv firme.");
     firmaEl.focus();
     return;
   }
 
-  if(ACCESS_KEY === "OVDJE_UNESI_ACCESS_KEY" || !ACCESS_KEY){
-    alert("Web3Forms Access Key nije podešen.");
-    return;
-  }
+  const datum = new Date().toLocaleString("bs-BA");
 
-  // datum
-  const now = new Date();
-  const datum = now.toLocaleString("bs-BA");
-
-  // tekst maila
   let text=`NARUDŽBA
 Datum: ${datum}
 Firma: ${firma}
@@ -240,49 +227,43 @@ STAVKE:
     text+=`${s} - ${cart[s].naziv} x ${cart[s].kolicina}\n`;
   }
 
-  // spriječi višestruko slanje
   sendBtn.disabled = true;
   sendBtn.textContent = "Slanje narudžbe...";
 
   try {
-
     const res = await fetch("https://api.web3forms.com/submit", {
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "Accept":"application/json"
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
       },
-      body:JSON.stringify({
+      body: JSON.stringify({
         access_key: ACCESS_KEY,
-        subject:"Nova narudžba iz kataloga",
-        from_name:"Katalog Subašić",
+        subject: "Nova narudžba iz kataloga - " + firma,
+        from_name: "Katalog Subašić",
         firma: firma,
         kontakt_osoba: osoba || "-",
         telefon: telefon || "-",
-        message:text
+        message: text
       })
     });
 
     const data = await res.json();
 
-    if(!res.ok || data.success !== true){
-      throw new Error(data.message || "Slanje nije uspjelo");
+    if (!res.ok || data.success !== true) {
+      throw new Error(data.message || data.body?.message || `Web3Forms greška (${res.status})`);
     }
 
     alert("Narudžba poslana ✅");
     localStorage.removeItem("korpa");
     location.reload();
 
-  } catch(err){
-
+  } catch(err) {
     console.error("Greška slanja narudžbe:", err);
-    alert("Greška: narudžba NIJE potvrđena. Pokušaj ponovo.\n" + err.message);
-
+    alert("Narudžba NIJE potvrđena. Korpa je sačuvana.\n\n" + err.message);
   } finally {
-
     sendBtn.disabled = false;
     sendBtn.textContent = "Pošalji narudžbu";
-
   }
 }
 
