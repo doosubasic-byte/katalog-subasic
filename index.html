@@ -1,3 +1,4 @@
+
 <!doctype html>
 
 <html lang="bs">
@@ -183,11 +184,19 @@ document.addEventListener("keydown",e=>{
   el.oninput=()=>localStorage.setItem(id,el.value);
 });
 
-function sendOrder(){
+/* ================= SLANJE NARUDŽBE - WEB3FORMS ================= */
+
+async function sendOrder(){
+
+  // OVDJE UNESI SVOJ WEB3FORMS ACCESS KEY
+  const ACCESS_KEY = "OVDJE_UNESI_ACCESS_KEY";
 
   const firmaEl = document.getElementById("firma");
   const osobaEl = document.getElementById("osoba");
   const telefonEl = document.getElementById("telefon");
+  const sendBtn = document.querySelector(".sendBtn");
+
+  if(sendBtn.disabled) return;
 
   const firma = (firmaEl.value || "").trim();
   const osoba = (osobaEl.value || "").trim();
@@ -205,6 +214,11 @@ function sendOrder(){
   if(!firma){
     alert("Ne možeš poslati narudžbu dok ne upišeš naziv firme.");
     firmaEl.focus();
+    return;
+  }
+
+  if(ACCESS_KEY === "OVDJE_UNESI_ACCESS_KEY" || !ACCESS_KEY){
+    alert("Web3Forms Access Key nije podešen.");
     return;
   }
 
@@ -226,28 +240,51 @@ STAVKE:
     text+=`${s} - ${cart[s].naziv} x ${cart[s].kolicina}\n`;
   }
 
-  fetch("https://formsubmit.co/ajax/doosubasic@gmail.com", {
-    method:"POST",
-    headers:{ 'Content-Type':'application/json' },
-    body:JSON.stringify({
-      subject:"Nova narudžba iz kataloga",
-      message:text
-    })
-  })
-  .then(res=>{
-    if(!res.ok) throw new Error("Slanje nije uspjelo");
-    return res.json().catch(()=>({}));
-  })
-  .then(()=>{
+  // spriječi višestruko slanje
+  sendBtn.disabled = true;
+  sendBtn.textContent = "Slanje narudžbe...";
+
+  try {
+
+    const res = await fetch("https://api.web3forms.com/submit", {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Accept":"application/json"
+      },
+      body:JSON.stringify({
+        access_key: ACCESS_KEY,
+        subject:"Nova narudžba iz kataloga",
+        from_name:"Katalog Subašić",
+        firma: firma,
+        kontakt_osoba: osoba || "-",
+        telefon: telefon || "-",
+        message:text
+      })
+    });
+
+    const data = await res.json();
+
+    if(!res.ok || data.success !== true){
+      throw new Error(data.message || "Slanje nije uspjelo");
+    }
+
     alert("Narudžba poslana ✅");
     localStorage.removeItem("korpa");
     location.reload();
-  })
-  .catch(()=>{
-    alert("Greška: narudžba NIJE poslana. Pokušaj ponovo.");
-  });
-}
 
+  } catch(err){
+
+    console.error("Greška slanja narudžbe:", err);
+    alert("Greška: narudžba NIJE potvrđena. Pokušaj ponovo.\n" + err.message);
+
+  } finally {
+
+    sendBtn.disabled = false;
+    sendBtn.textContent = "Pošalji narudžbu";
+
+  }
+}
 
 </script>
 
